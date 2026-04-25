@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Willem Warehouse Control v5</title>
+    <style>
+        :root { --accent: #eab308; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* HEADER */
+        header { background: var(--accent); color: #000; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; border-bottom: 4px solid #ca8a04; }
+        
+        .main-layout { display: grid; grid-template-columns: 1fr 350px; flex-grow: 1; overflow: hidden; padding: 10px; gap: 10px; }
+        
+        /* DOCKS GRID */
+        .docks-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto; padding-right: 5px; }
+        .dock-card { background: var(--card); padding: 8px; border-radius: 6px; border-left: 5px solid var(--accent); display: flex; align-items: center; gap: 8px; }
+        .dock-nr { font-weight: bold; color: var(--accent); min-width: 65px; font-size: 13px; }
+        input { background: #0f172a; border: 1px solid #334155; color: #fff; padding: 5px; border-radius: 4px; flex-grow: 1; font-size: 12px; outline: none; }
+        select { background: #334155; color: white; border: none; padding: 4px; border-radius: 4px; font-size: 11px; }
+
+        /* SIDEBAR */
+        .sidebar { display: flex; flex-direction: column; gap: 10px; }
+        .tool-card { background: var(--card); padding: 12px; border-radius: 10px; border-top: 3px solid var(--accent); }
+        .tool-title { font-size: 12px; color: var(--accent); font-weight: bold; text-transform: uppercase; margin-bottom: 8px; display: block; }
+        
+        /* ORDERS & TIMER */
+        .big-display { font-size: 40px; font-weight: bold; color: var(--accent); text-align: center; font-family: monospace; margin: 5px 0; }
+        .btn { padding: 8px; cursor: pointer; border-radius: 5px; border: none; font-weight: bold; font-size: 14px; }
+        .btn-plus { background: #22c55e; color: white; }
+        .btn-minus { background: #ef4444; color: white; }
+        
+        /* PRIO TABLE */
+        table { width: 100%; font-size: 12px; border-collapse: collapse; }
+        td { padding: 4px 0; border-bottom: 1px solid #334155; }
+
+        /* TICKER */
+        .ticker { background: #1e293b; padding: 6px; white-space: nowrap; overflow: hidden; font-size: 12px; border-top: 1px solid #334155; }
+        .ticker-text { display: inline-block; animation: scroll 25s linear infinite; color: var(--accent); font-weight: bold; }
+        @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>📦 WAREHOUSE CONTROL | WILLEM</div>
+        <div id="clock" style="font-family: monospace; font-size: 24px;">00:00:00</div>
+    </header>
+
+    <div class="main-layout">
+        <div class="docks-grid" id="docksGrid"></div>
+
+        <div class="sidebar">
+            
+            <div class="tool-card">
+                <span class="tool-title">📦 Order Status</span>
+                <div id="orderCount" class="big-display">412</div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:4px;">
+                    <button class="btn btn-minus" onclick="changeOrders(-10)">-10</button>
+                    <button class="btn btn-minus" onclick="changeOrders(-1)">-1</button>
+                    <button class="btn btn-plus" onclick="changeOrders(1)">+1</button>
+                    <button class="btn btn-plus" onclick="changeOrders(10)">+10</button>
+                </div>
+            </div>
+
+            <div class="tool-card">
+                <span class="tool-title">⏳ Pauze Timer (15:00)</span>
+                <div id="timer" class="big-display">15:00</div>
+                <button onclick="toggleTimer()" class="btn" style="width:100%; background: #475569; color:white;">START / STOP</button>
+            </div>
+
+            <div class="tool-card" style="border-top-color: #ef4444;">
+                <span class="tool-title" style="color:#ef4444;">🔥 Prio Deadlines</span>
+                <table>
+                    <tr><td>Route PostNL</td><td align="right"><b>14:30</b></td></tr>
+                    <tr><td>Sneltransport X</td><td align="right"><b>15:15</b></td></tr>
+                    <tr><td>Route DHL</td><td align="right">16:00</td></tr>
+                </table>
+            </div>
+
+            <div class="tool-card" style="border-top-color: #3b82f6; text-align: center;">
+                <span class="tool-title" style="color:#3b82f6;">📲 Chauffeur Info</span>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=70x70&data=TERREINREGELS" style="background:white; padding:3px; border-radius:3px; margin:5px 0;">
+                <div style="font-size: 10px; color: #94a3b8;">Scan voor de terreinregels</div>
+            </div>
+
+            <button onclick="celebrate()" style="background: var(--accent); border:none; padding:12px; border-radius:10px; font-weight:bold; cursor:pointer; width:100%;">
+                🎉 VIER SUCCES!
+            </button>
+
+        </div>
+    </div>
+
+    <div class="ticker">
+        <div class="ticker-text">+++ MEDEDELING: Dock 4 t/m 6 gereserveerd voor inbound 14:30 +++ ☕ Verse koffie beschikbaar +++ 🚛 Let op: Gladheid op het buitenterrein +++</div>
+    </div>
+
+    <script>
+        // Genereer 22 Docks
+        const grid = document.getElementById('docksGrid');
+        for (let i = 1; i <= 22; i++) {
+            grid.innerHTML += `
+                <div class="dock-card">
+                    <span class="dock-nr">DOCK ${i < 10 ? '0'+i : i}</span>
+                    <input type="text" placeholder="Transporteur...">
+                    <select onchange="this.parentElement.style.borderLeftColor = (this.value=='L') ? '#22c55e' : (this.value=='U') ? '#ef4444' : '#eab308'">
+                        <option value="">LEEG</option>
+                        <option value="L">LADEN</option>
+                        <option value="U">LOSSEN</option>
+                    </select>
+                </div>`;
+        }
+
+        // Klok
+        setInterval(() => { document.getElementById('clock').textContent = new Date().toLocaleTimeString('nl-NL'); }, 1000);
+
+        // Orders
+        let orders = 412;
+        function changeOrders(n) { orders = Math.max(0, orders + n); document.getElementById('orderCount').textContent = orders; }
+
+        // Timer
+        let time = 900, tInterval = null;
+        function toggleTimer() {
+            if(tInterval) { clearInterval(tInterval); tInterval = null; }
+            else { tInterval = setInterval(() => {
+                if(time <= 0) return; time--;
+                let m = Math.floor(time/60), s = time%60;
+                document.getElementById('timer').textContent = m + ":" + (s<10?'0':'') + s;
+            }, 1000); }
+        }
+
+        // Succes (Confetti placeholder)
+        function celebrate() { alert("🏆 TOP GEWERKT WILLEM EN TEAM!"); }
+    </script>
+</body>
+</html>
