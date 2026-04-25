@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Countdown</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root { --blue: #00d2ff; --red: #ff4444; --green: #00ff88; --gold: #ffcc00; }
+        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+        h1 { font-weight: 300; letter-spacing: 4px; margin: 20px 0; }
+        
+        .input-box { width: 100%; max-width: 400px; background: rgba(255,255,255,0.08); padding: 20px; border-radius: 20px; border: 1px solid #333; text-align: center; backdrop-filter: blur(10px); }
+        input, select { width: 90%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #444; background: #000; color: #fff; font-size: 16px; }
+        
+        .btn { width: 90%; padding: 15px; background: var(--blue); color: #000; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; margin-top: 10px; }
+        
+        #grid { width: 100%; max-width: 500px; margin-top: 30px; }
+        
+        .card { background: rgba(255,255,255,0.08); padding: 25px; border-radius: 20px; margin-bottom: 20px; position: relative; border-top: 4px solid var(--blue); }
+        .card.red { border-top-color: var(--red); }
+        .card.green { border-top-color: var(--green); }
+        .card.gold { border-top-color: var(--gold); }
+
+        .title { font-size: 1.1rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 15px; display: block; text-align: left; }
+        .time { font-size: 1.8rem; font-weight: 800; font-family: monospace; display: flex; justify-content: space-around; }
+        
+        .blue-text { color: var(--blue); }
+        .red-text { color: var(--red); }
+        .green-text { color: var(--green); }
+        .gold-text { color: var(--gold); }
+
+        .actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 15px; }
+        .act-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; filter: grayscale(0.5); }
+        .act-btn:hover { filter: grayscale(0); }
+        
+        .unit-label { font-size: 0.6rem; color: #666; text-transform: uppercase; display: block; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>COUNTDOWN</h1>
+
+    <div class="input-box">
+        <input type="text" id="t" placeholder="Wat is de gebeurtenis?">
+        <input type="datetime-local" id="d">
+        <select id="c">
+            <option value="blue">Blauw</option>
+            <option value="red">Rood</option>
+            <option value="green">Groen</option>
+            <option value="gold">Goud</option>
+        </select>
+        <button class="btn" onclick="add()">TOEVOEGEN</button>
+    </div>
+
+    <div id="grid"></div>
+
+<script>
+    let list = JSON.parse(localStorage.getItem('c_final')) || [];
+
+    window.onload = () => {
+        const p = new URLSearchParams(window.location.search);
+        if(p.has('t')) {
+            const shared = {id: Date.now(), t: decodeURIComponent(p.get('t')), d: parseInt(p.get('d')), c: p.get('c') || 'blue', done: false};
+            if(!list.find(x => x.d === shared.d)) { list.push(shared); save(); }
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+        draw();
+    };
+
+    function add() {
+        const t = document.getElementById('t').value;
+        const d = document.getElementById('d').value;
+        const c = document.getElementById('c').value;
+        if(!t || !d) return alert("Vul een naam en datum in!");
+        list.push({id: Date.now(), t, d: new Date(d).getTime(), c, done: false});
+        save(); draw();
+        document.getElementById('t').value = '';
+    }
+
+    function remove(id) { list = list.filter(k => k.id !== id); save(); draw(); }
+
+    function share(id) {
+        const k = list.find(x => x.id === id);
+        const url = `${window.location.origin}${window.location.pathname}?t=${encodeURIComponent(k.t)}&d=${k.d}&c=${k.c}`;
+        const msg = `Bekijk mijn Countdown voor ${k.t}: ${url}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function save() { localStorage.setItem('c_final', JSON.stringify(list)); }
+
+    function draw() {
+        const g = document.getElementById('grid');
+        g.innerHTML = '';
+        list.forEach(k => {
+            g.innerHTML += `
+                <div class="card ${k.c}">
+                    <div class="actions">
+                        <button class="act-btn" onclick="share(${k.id})">🟢</button>
+                        <button class="act-btn" onclick="remove(${k.id})">✕</button>
+                    </div>
+                    <span class="title">${k.t.toUpperCase()}</span>
+                    <div class="time ${k.c}-text" id="klok-${k.id}">Laden...</div>
+                </div>
+            `;
+        });
+    }
+
+    setInterval(() => {
+        const now = new Date().getTime();
+        list.forEach(k => {
+            const diff = k.d - now;
+            const el = document.getElementById('klok-'+k.id);
+            if(!el) return;
+
+            if(diff <= 0) {
+                if(!k.done) { confetti({particleCount:100, spread:70, origin:{y:0.6}}); k.done=true; save(); }
+                el.innerHTML = "TIJD IS OM! 🎉";
+            } else {
+                const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000), m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
+                el.innerHTML = `<div>${d}<span class="unit-label">Dag</span></div><div>${h}<span class="unit-label">Uur</span></div><div>${m}<span class="unit-label">Min</span></div><div>${s}<span class="unit-label">Sec</span></div>`;
+            }
+        });
+    }, 1000);
+    draw();
+</script>
+</body>
+</html>
