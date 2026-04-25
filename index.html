@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Willems Premium Countdowns</title>
+    <style>
+        /* --- BASIS STYLING --- */
+        :root {
+            --bg-color: #050509; /* Extreem donker voor contrast */
+            --glass-bg: rgba(255, 255, 255, 0.03); /* De 'glazen' basis */
+            --glass-border: rgba(255, 255, 255, 0.08); /* Dunne rand */
+            --text-primary: #ffffff;
+            --text-secondary: #8b949e;
+            --accent-blue: #00d2ff; /* De blauwe gloed */
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            /* Subtiele ruimtelijke gloed op de achtergrond */
+            background-image: 
+                radial-gradient(at 10% 10%, rgba(0, 210, 255, 0.05) 0px, transparent 50%),
+                radial-gradient(at 90% 90%, rgba(128, 0, 255, 0.05) 0px, transparent 50%);
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+
+        /* --- BEDIENINGSPANEEL (OMHOOG VERPLAATST) --- */
+        .controls {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 40px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls input {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 1rem;
+        }
+
+        .controls input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        .add-btn {
+            background-color: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border);
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .add-btn:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: var(--text-primary);
+        }
+
+        /* --- HET KLOKKEN GRID --- */
+        #clock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* --- HET GLASSMORPHISM KAARTJE --- */
+        .clock-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px); /* Het matte glas effect */
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
+        }
+
+        /* De subtiele neon-gloed aan de bovenkant */
+        .clock-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+            box-shadow: 0 0 15px 2px var(--accent-blue);
+        }
+
+        .clock-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(0, 210, 255, 0.1);
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        .delete-btn:hover { color: #ff6b6b; }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            color: var(--accent-blue);
+            text-shadow: 0 0 10px var(--accent-blue);
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 400;
+            color: var(--text-primary);
+        }
+
+        /* --- HET AFTEL DISPLAY --- */
+        .countdown {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .time-block {
+            flex: 1;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px 5px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255, 0.03);
+        }
+
+        .time-block .digits {
+            display: block;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-shadow: 0 0 10px var(--accent-blue);
+            font-variant-numeric: tabular-nums; /* Voorkomt springende cijfers */
+        }
+
+        .time-block .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        /* --- DE STATUS BAR ONDERAAN --- */
+        .card-footer {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--glass-border);
+            padding-top: 15px;
+            text-align: center;
+        }
+
+        .finished {
+            color: #10b981;
+            font-weight: bold;
+            text-shadow: 0 0 10px #10b981;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Premium Countdowns</h1>
+    </header>
+
+    <div class="controls">
+        <input type="text" id="titleInput" placeholder="Titel gebeurtenis">
+        <input type="datetime-local" id="dateInput">
+        <button class="add-btn" onclick="addClock()">+ Klok Toevoegen</button>
+    </div>
+
+    <div id="clock-grid">
+        </div>
+
+<script>
+    // --- FUNCTIES ---
+    let clocks = JSON.parse(localStorage.getItem('glassClocks')) || [];
+
+    // Iconen toewijzen op basis van trefwoorden
+    function getIcon(title) {
+        title = title.toLowerCase();
+        if (title.includes('mars') || title.includes('space') || title.includes('raket')) return '🚀';
+        if (title.includes('music') || title.includes('festival') || title.includes('concert')) return '🎵';
+        if (title.includes('tesla') || title.includes('auto') || title.includes('reveal')) return '🚘';
+        if (title.includes('verjaardag') || title.includes('opa')) return '🎂';
+        return '📅'; // Standaard icon
+    }
+
+    function save() {
+        localStorage.setItem('glassClocks', JSON.stringify(clocks));
+    }
+
+    function addClock() {
+        const title = document.getElementById('titleInput').value;
+        const date = document.getElementById('dateInput').value;
+
+        if (!title || !date) return;
+
+        clocks.push({
+            id: Date.now(),
+            title: title,
+            target: new Date(date).getTime(),
+            icon: getIcon(title)
+        });
+
+        save();
+        render();
+        document.getElementById('titleInput').value = '';
+        document.getElementById('dateInput').value = '';
+    }
+
+    function deleteClock(id) {
+        clocks = clocks.filter(c => c.id !== id);
+        save();
+        render();
+    }
+
+    function render() {
+        const grid = document.getElementById('clock-grid');
+        grid.innerHTML = '';
+
+        clocks.forEach(clock => {
+            const dateObj = new Date(clock.target);
+            const dateStr = dateObj.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' }).toUpperCase();
+
+            grid.innerHTML += `
+                <div class="clock-card">
+                    <button class="delete-btn" onclick="deleteClock(${clock.id})">&times;</button>
+                    <div class="card-header">
+                        <span class="card-icon">${clock.icon}</span>
+                        <h2>${clock.title}</h2>
+                    </div>
+                    <div class="countdown" id="timer-${clock.id}">
+                        <div class="time-block"><span class="digits" id="d-${clock.id}">000</span><div class="label">Dagen</div></div>
+                        <div class="time-block"><span class="digits" id="h-${clock.id}">00</span><div class="label">Uren</div></div>
+                        <div class="time-block"><span class="digits" id="m-${clock.id}">00</span><div class="label">Minuten</div></div>
+                        <div class="time-block"><span class="digits" id="s-${clock.id}">00</span><div class="label">Seconden</div></div>
+                    </div>
+                    <div class="card-footer" id="footer-${clock.id}">
+                        DOELDATUM: ${dateStr}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function update() {
+        const now = new Date().getTime();
+        clocks.forEach(clock => {
+            const dist = clock.target - now;
+            const container = document.getElementById(`timer-${clock.id}`);
+            if (!container) return;
+
+            if (dist < 0) {
+                container.innerHTML = "<div class='finished'>🎉 HET IS ZOVER!</div>";
+                document.getElementById(`footer-${clock.id}`).innerText = "GEBEURTENIS VOLTOOID";
+                return;
+            }
+
+            const d = Math.floor(dist / (1000 * 60 * 60 * 24));
+            const h = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((dist % (1000 * 60)) / 1000);
+
+            document.getElementById(`d-${clock.id}`).innerText = d.toString().padStart(3, '0');
+            document.getElementById(`h-${clock.id}`).innerText = h.toString().padStart(2, '0');
+            document.getElementById(`m-${clock.id}`).innerText = m.toString().padStart(2, '0');
+            document.getElementById(`s-${clock.id}`).innerText = s.toString().padStart(2, '0');
+        });
+    }
+
+    // --- INITIALISATIE ---
+    render();
+    setInterval(update, 1000);
+    update(); // Direct eerste update uitvoeren
+</script>
+
+</body>
+</html>
