@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Willems Ultimate Countdowns</title>
+    <style>
+        :root {
+            --bg-color: #050509;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at center, #111 0%, #000 100%);
+            color: white;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .controls {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 40px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        input, select {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: rgba(0,0,0,0.5);
+            color: white;
+        }
+
+        .add-btn {
+            background: white;
+            color: black;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #clock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .clock-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Dynamische gloed op basis van gekozen kleur */
+        .clock-card.glow-blue { border-top: 2px solid #00d2ff; box-shadow: 0 0 15px rgba(0, 210, 255, 0.1); }
+        .clock-card.glow-red { border-top: 2px solid #ff4444; box-shadow: 0 0 15px rgba(255, 68, 68, 0.1); }
+        .clock-card.glow-green { border-top: 2px solid #00ff88; box-shadow: 0 0 15px rgba(0, 255, 136, 0.1); }
+        .clock-card.glow-gold { border-top: 2px solid #ffcc00; box-shadow: 0 0 15px rgba(255, 204, 0, 0.1); }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .time-unit {
+            text-align: center;
+            flex: 1;
+        }
+
+        .digits {
+            display: block;
+            font-size: 2.2rem;
+            font-weight: 800;
+            font-family: monospace;
+        }
+
+        /* Kleur van de cijfers volgt de thema kleur */
+        .glow-blue .digits { color: #00d2ff; }
+        .glow-red .digits { color: #ff4444; }
+        .glow-green .digits { color: #00ff88; }
+        .glow-gold .digits { color: #ffcc00; }
+
+        .label { font-size: 0.7rem; color: #777; text-transform: uppercase; }
+
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #555;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Premium Countdowns</h1>
+
+    <div class="controls">
+        <input type="text" id="titleInput" placeholder="Titel">
+        <input type="datetime-local" id="dateInput">
+        <select id="colorInput">
+            <option value="blue">Blauw</option>
+            <option value="red">Rood</option>
+            <option value="green">Groen</option>
+            <option value="gold">Goud</option>
+        </select>
+        <button class="add-btn" onclick="addClock()">Toevoegen</button>
+        <button onclick="requestNotify()" style="background:none; border:1px solid #444; color:#888; border-radius:8px; cursor:pointer;">Belletje aan</button>
+    </div>
+
+    <div id="clock-grid"></div>
+
+<script>
+    let clocks = JSON.parse(localStorage.getItem('premiumClocks')) || [];
+
+    function requestNotify() {
+        Notification.requestPermission();
+    }
+
+    function addClock() {
+        const title = document.getElementById('titleInput').value;
+        const date = document.getElementById('dateInput').value;
+        const color = document.getElementById('colorInput').value;
+
+        if (!title || !date) return;
+
+        clocks.push({
+            id: Date.now(),
+            title: title,
+            target: new Date(date).getTime(),
+            color: color,
+            notified: false
+        });
+
+        save();
+        render();
+    }
+
+    function deleteClock(id) {
+        clocks = clocks.filter(c => c.id !== id);
+        save();
+        render();
+    }
+
+    function save() { localStorage.setItem('premiumClocks', JSON.stringify(clocks)); }
+
+    function render() {
+        const grid = document.getElementById('clock-grid');
+        grid.innerHTML = '';
+        clocks.forEach(clock => {
+            grid.innerHTML += `
+                <div class="clock-card glow-${clock.color}">
+                    <button class="delete-btn" onclick="deleteClock(${clock.id})">&times;</button>
+                    <h2 style="margin:0; font-weight:400;">${clock.title}</h2>
+                    <div class="time-display" id="timer-${clock.id}">
+                        <div class="time-unit"><span class="digits" id="d-${clock.id}">00</span><span class="label">Dagen</span></div>
+                        <div class="time-unit"><span class="digits" id="h-${clock.id}">00</span><span class="label">Uren</span></div>
+                        <div class="time-unit"><span class="digits" id="m-${clock.id}">00</span><span class="label">Min</span></div>
+                        <div class="time-unit"><span class="digits" id="s-${clock.id}">00</span><span class="label">Sec</span></div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function update() {
+        const now = new Date().getTime();
+        clocks.forEach(clock => {
+            const dist = clock.target - now;
+            if (dist <= 0 && !clock.notified) {
+                if (Notification.permission === "granted") {
+                    new Notification("Tijd is om!", { body: clock.title });
+                }
+                clock.notified = true;
+                save();
+            }
+            
+            const dNode = document.getElementById(`d-${clock.id}`);
+            if (!dNode) return;
+
+            if (dist < 0) {
+                document.getElementById(`timer-${clock.id}`).innerHTML = "<div style='width:100%; text-align:center; padding:10px; color:#fff;'>VOLTOOID! 🎉</div>";
+                return;
+            }
+
+            dNode.innerText = Math.floor(dist / (1000 * 60 * 60 * 24)).toString().padStart(2, '0');
+            document.getElementById(`h-${clock.id}`).innerText = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
+            document.getElementById(`m-${clock.id}`).innerText = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+            document.getElementById(`s-${clock.id}`).innerText = Math.floor((dist % (1000 * 60)) / 1000).toString().padStart(2, '0');
+        });
+    }
+
+    render();
+    setInterval(update, 1000);
+</script>
+</body>
+</html>
