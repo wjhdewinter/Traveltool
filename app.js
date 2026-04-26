@@ -216,7 +216,6 @@ const backDetailBtn = document.getElementById("backDetailBtn");
 const detailEditBtn = document.getElementById("detailEditBtn");
 const detailShareBtn = document.getElementById("detailShareBtn");
 const detailPeopleBtn = document.getElementById("detailPeopleBtn");
-const detailFab = document.getElementById("detailFab");
 
 let activeDetailId = null;
 
@@ -345,6 +344,33 @@ detailShareBtn.addEventListener("click", async () => {
 });
 
 detailPeopleBtn.addEventListener("click", () => alert("Personen delen kan later gekoppeld worden aan WhatsApp of e-mail."));
-detailFab.addEventListener("click", () => alert("Personen delen kan later gekoppeld worden aan WhatsApp of e-mail."));
 
 setInterval(renderDetail, 100);
+
+
+// Installable PWA button
+let deferredInstallPrompt = null;
+const installBtn = document.getElementById("installBtn");
+
+window.addEventListener("beforeinstallprompt", event => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  if(installBtn) installBtn.hidden = false;
+});
+
+if(installBtn){
+  installBtn.addEventListener("click", async () => {
+    if(deferredInstallPrompt){
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice.catch(() => {});
+      deferredInstallPrompt = null;
+      installBtn.hidden = true;
+    } else {
+      alert("Installeren: open het browsermenu en kies 'Toevoegen aan startscherm' of 'App installeren'.");
+    }
+  });
+}
+
+window.addEventListener("appinstalled", () => {
+  if(installBtn) installBtn.hidden = true;
+});
