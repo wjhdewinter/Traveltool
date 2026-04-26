@@ -50,3 +50,23 @@ De standaard countdowns kun je aanpassen in `app.js` bij `loadCountdowns()`.
   - seconden
   - milliseconden
 - Deelknop via mobiele share-sheet
+
+
+## Nieuw in v3
+
+- Blauwe zwevende knop op de detailpagina verwijderd
+- App is installeerbaar als PWA
+- Mooi app-icoon toegevoegd
+- Installatieknop toegevoegd wanneer de browser dit ondersteunt
+
+## Installeren op telefoon
+
+### Android / Chrome
+1. Open de GitHub Pages link.
+2. Tik op **App installeren** als de knop verschijnt.
+3. Verschijnt de knop niet? Open het browsermenu en kies **Toevoegen aan startscherm**.
+
+### iPhone / Safari
+1. Open de GitHub Pages link in Safari.
+2. Tik op delen.
+3. Kies **Zet op beginscherm**.
