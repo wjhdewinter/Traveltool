@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Final Countdown PRO</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#202020" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button class="icon-btn" id="menuBtn" aria-label="Menu">☰</button>
+      <h1>Final Countdown</h1>
+      <button class="icon-btn plus" id="addBtn" aria-label="Nieuwe countdown">+</button>
+    </header>
+
+    <section class="intro-card">
+      <strong>Countdowns</strong>
+      <span>Maak timers voor vakantie, deadlines, keuringen of leveringen.</span>
+    </section>
+
+    <main id="countdownList" class="list"></main>
+
+    <p class="empty" id="emptyState">
+      Nog geen countdowns. Tik op de plus om je eerste timer te maken.
+    </p>
+  </div>
+
+  <dialog id="countdownDialog">
+    <form method="dialog" id="countdownForm" class="dialog-card">
+      <h2 id="dialogTitle">Nieuwe countdown</h2>
+
+      <label>
+        Naam
+        <input id="titleInput" type="text" placeholder="Bijv. vakantie" required maxlength="40" />
+      </label>
+
+      <label>
+        Datum
+        <input id="dateInput" type="date" required />
+      </label>
+
+      <label>
+        Tijd
+        <input id="timeInput" type="time" value="16:00" required />
+      </label>
+
+      <label>
+        Categorie
+        <select id="categoryInput">
+          <option value="vakantie">Vakantie</option>
+          <option value="verjaardag">Verjaardag</option>
+          <option value="deadline">Deadline</option>
+          <option value="keuring">Keuring</option>
+          <option value="levering">Levering</option>
+          <option value="anders">Anders</option>
+        </select>
+      </label>
+
+      <div class="dialog-actions">
+        <button type="button" class="ghost" id="cancelBtn">Annuleren</button>
+        <button type="submit" class="primary">Opslaan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
