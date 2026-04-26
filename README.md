@@ -33,3 +33,20 @@ Een mobiele webbased countdown-app in donkere stijl, geschikt voor GitHub Pages.
 ## Aanpassen
 
 De standaard countdowns kun je aanpassen in `app.js` bij `loadCountdowns()`.
+
+
+## Nieuw in v2
+
+- Detailpagina per countdown
+- Grote timerweergave zoals in je voorbeeld
+- Extra berekeningen:
+  - jaren
+  - maanden
+  - weken
+  - dagen
+  - werkdagen
+  - uren
+  - minuten
+  - seconden
+  - milliseconden
+- Deelknop via mobiele share-sheet

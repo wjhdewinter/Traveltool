@@ -206,3 +206,145 @@ render();
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
+
+
+// Detail screen like Final Countdown app
+const detailDialog = document.getElementById("detailDialog");
+const detailContent = document.getElementById("detailContent");
+const detailHeaderTitle = document.getElementById("detailHeaderTitle");
+const backDetailBtn = document.getElementById("backDetailBtn");
+const detailEditBtn = document.getElementById("detailEditBtn");
+const detailShareBtn = document.getElementById("detailShareBtn");
+const detailPeopleBtn = document.getElementById("detailPeopleBtn");
+const detailFab = document.getElementById("detailFab");
+
+let activeDetailId = null;
+
+function decimalComma(value, decimals = 1){
+  return value.toFixed(decimals).replace(".", ",");
+}
+
+function workdaysBetween(startDate, endDate){
+  let count = 0;
+  const d = new Date(startDate);
+  d.setHours(0,0,0,0);
+  const end = new Date(endDate);
+  end.setHours(0,0,0,0);
+
+  while(d < end){
+    const day = d.getDay();
+    if(day !== 0 && day !== 6) count++;
+    d.setDate(d.getDate() + 1);
+  }
+  return count;
+}
+
+function detailStats(target){
+  const now = new Date();
+  const end = new Date(target);
+  const diff = Math.max(0, end - now);
+
+  const daysExact = diff / 86400000;
+  const years = daysExact / 365.2425;
+  const months = daysExact / 30.436875;
+  const weeks = daysExact / 7;
+  const hours = Math.floor(diff / 3600000);
+  const minutes = Math.floor(diff / 60000);
+  const seconds = Math.floor(diff / 1000);
+
+  return {
+    years: decimalComma(years),
+    months: decimalComma(months),
+    weeks: decimalComma(weeks),
+    days: decimalComma(daysExact),
+    workdays: decimalComma(workdaysBetween(now, end)),
+    hours,
+    minutes,
+    seconds,
+    milliseconds: diff
+  };
+}
+
+function openDetail(id){
+  activeDetailId = id;
+  renderDetail();
+  detailDialog.showModal();
+}
+
+function renderDetail(){
+  if(!activeDetailId || !detailDialog.open) return;
+
+  const item = countdowns.find(c => c.id === activeDetailId);
+  if(!item){
+    detailDialog.close();
+    return;
+  }
+
+  const time = calculate(item.target);
+  const stats = detailStats(item.target);
+  detailHeaderTitle.textContent = "Final Countd...";
+  detailContent.innerHTML = `
+    <article class="detail-count-card ${time.finished ? "finished" : ""}">
+      <div class="card-head">
+        <div class="card-title">${escapeHtml(item.title)}</div>
+        <div class="card-icons">⏰↩⌃</div>
+      </div>
+
+      <div class="timer">
+        ${timerUnit("DAGEN", time.days)}
+        ${timerUnit("UUR", time.hours)}
+        ${timerUnit("MIN", time.minutes)}
+        ${timerUnit("SEC", time.seconds)}
+      </div>
+    </article>
+
+    <div class="detail-date">${formatDateTime(item.target)}</div>
+
+    <section class="stats">
+      <div class="stat-row"><span class="stat-label">JAREN</span><span class="stat-value">${stats.years}</span></div>
+      <div class="stat-row"><span class="stat-label">MAANDEN</span><span class="stat-value">${stats.months}</span></div>
+      <div class="stat-row"><span class="stat-label">WEKEN</span><span class="stat-value">${stats.weeks}</span></div>
+      <div class="stat-row"><span class="stat-label">DAGEN</span><span class="stat-value">${stats.days}</span></div>
+      <div class="stat-row"><span class="stat-label workdays">Werkdagen</span><span class="stat-value">${stats.workdays}</span></div>
+      <div class="stat-row"><span class="stat-label">UREN</span><span class="stat-value">${stats.hours}</span></div>
+      <div class="stat-row stat-strip"><span class="stat-label">MINUTEN</span><span class="stat-value">${stats.minutes}</span></div>
+      <div class="stat-row stat-strip"><span class="stat-label">SECONDEN</span><span class="stat-value">${stats.seconds}</span></div>
+      <div class="stat-row stat-strip"><span class="stat-label">MILLISECONDS</span><span class="stat-value">${stats.milliseconds}</span></div>
+    </section>
+  `;
+}
+
+// Open detail when clicking card, but not action buttons
+list.addEventListener("click", event => {
+  if(event.target.closest(".action-btn")) return;
+  const card = event.target.closest(".card");
+  if(!card) return;
+  const index = [...list.children].indexOf(card);
+  const sorted = [...countdowns].sort((a,b) => new Date(a.target) - new Date(b.target));
+  if(sorted[index]) openDetail(sorted[index].id);
+});
+
+backDetailBtn.addEventListener("click", () => detailDialog.close());
+
+detailEditBtn.addEventListener("click", () => {
+  const item = countdowns.find(c => c.id === activeDetailId);
+  detailDialog.close();
+  if(item) openDialog(item);
+});
+
+detailShareBtn.addEventListener("click", async () => {
+  const item = countdowns.find(c => c.id === activeDetailId);
+  if(!item) return;
+  const text = `${item.title} - countdown tot ${formatDateTime(item.target)}`;
+  if(navigator.share){
+    await navigator.share({title:"Final Countdown", text}).catch(() => {});
+  } else {
+    await navigator.clipboard.writeText(text).catch(() => {});
+    alert("Countdown tekst gekopieerd.");
+  }
+});
+
+detailPeopleBtn.addEventListener("click", () => alert("Personen delen kan later gekoppeld worden aan WhatsApp of e-mail."));
+detailFab.addEventListener("click", () => alert("Personen delen kan later gekoppeld worden aan WhatsApp of e-mail."));
+
+setInterval(renderDetail, 100);

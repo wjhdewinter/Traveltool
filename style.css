@@ -249,3 +249,141 @@ input,select{
   .card-foot{font-size:17px}
   .action-btn{width:52px;height:45px}
 }
+
+
+/* Detail screen */
+.detail-dialog{
+  width:100vw;
+  max-width:520px;
+  height:100vh;
+  max-height:100vh;
+  margin:0 auto;
+  background:#050505;
+}
+
+.detail-dialog::backdrop{background:#000}
+
+.detail-page{
+  min-height:100vh;
+  background:linear-gradient(#000 0%, #000 66%, #171717 100%);
+  color:#eee;
+}
+
+.detail-topbar{
+  height:96px;
+  display:grid;
+  grid-template-columns:64px 1fr 64px 64px 64px;
+  align-items:center;
+  padding-top:env(safe-area-inset-top);
+  background:#000;
+}
+
+.detail-topbar h1{
+  margin:0;
+  font-size:26px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.detail-topbar .icon-btn{
+  color:#e7e7e7;
+  font-size:38px;
+}
+
+#backDetailBtn{font-size:56px}
+
+.detail-spacer{height:178px}
+
+.detail-count-card{
+  border-top:1px solid #424242;
+  border-bottom:1px solid #424242;
+  background:#151515;
+}
+
+.detail-count-card .card-head{
+  height:60px;
+  padding:0 12px 8px;
+}
+
+.detail-count-card .card-title{
+  font-size:27px;
+}
+
+.detail-count-card .timer{
+  border-bottom:0;
+  padding-bottom:5px;
+}
+
+.detail-count-card .digits{
+  font-size:55px;
+}
+
+.detail-date{
+  text-align:center;
+  font-size:22px;
+  font-weight:700;
+  color:#c8c8c8;
+  margin:8px 0 14px;
+}
+
+.stats{
+  width:min(430px, 92vw);
+  margin:0 auto;
+  text-align:center;
+  color:#bfbfbf;
+  font-size:20px;
+}
+
+.stat-row{
+  display:grid;
+  grid-template-columns:1fr 110px;
+  align-items:center;
+  gap:8px;
+  padding:4px 0;
+}
+
+.stat-label{
+  text-align:right;
+  text-transform:uppercase;
+}
+
+.stat-label.workdays{
+  text-transform:none;
+}
+
+.stat-value{
+  text-align:left;
+  font-weight:800;
+  color:#cfcfcf;
+}
+
+.stat-strip{
+  background:rgba(20,20,20,.72);
+  margin-top:5px;
+}
+
+.fab{
+  position:fixed;
+  right:34px;
+  bottom:96px;
+  width:78px;
+  height:78px;
+  border:0;
+  border-radius:50%;
+  background:#45bce9;
+  color:white;
+  font-size:38px;
+  box-shadow:0 8px 22px rgba(0,0,0,.45);
+}
+
+.card{cursor:pointer}
+
+@media(max-width:390px){
+  .detail-topbar{grid-template-columns:56px 1fr 54px 54px 54px}
+  .detail-topbar h1{font-size:23px}
+  .detail-topbar .icon-btn{font-size:31px}
+  .detail-spacer{height:160px}
+  .detail-count-card .digits{font-size:47px}
+  .stats{font-size:18px}
+}

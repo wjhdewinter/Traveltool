@@ -1,4 +1,4 @@
-const CACHE_NAME = "final-countdown-pro-v1";
+const CACHE_NAME = "final-countdown-pro-v2";
 const ASSETS = ["./", "./index.html", "./style.css", "./app.js", "./manifest.json"];
 
 self.addEventListener("install", event => {
