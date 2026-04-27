@@ -1,115 +1,42 @@
+const STORAGE_KEY="countdown-v10-pro-full", THEME_KEY="countdown-theme-v10";
 const $=id=>document.getElementById(id);
-const STORE="travel-v10";
-let trips=JSON.parse(localStorage.getItem(STORE)||"[]");
-let editId=null, activeTrip=null;
-
-function saveTrips(){localStorage.setItem(STORE,JSON.stringify(trips))}
-function dt(trip){return new Date(`${trip.date}T${trip.time||"12:00"}`)}
-function countdown(trip){let ms=Math.max(0,dt(trip)-Date.now());let d=Math.floor(ms/864e5);ms%=864e5;let h=Math.floor(ms/36e5);ms%=36e5;let m=Math.floor(ms/6e4);return `${d} dagen ${h} uur ${m} min`}
-function render(){
- const list=$("list"); list.innerHTML="";
- if(!trips.length) list.innerHTML='<div class="card"><h2>Nog geen reizen</h2><p class="muted">Maak je eerste travel countdown.</p></div>';
- trips.sort((a,b)=>dt(a)-dt(b)).forEach(t=>{
-  let div=document.createElement("article"); div.className="card";
-  div.innerHTML=`<h2>✈️ ${t.title}</h2><p>📍 ${t.location}</p><p>🏨 ${t.hotel}</p><div class="count">${countdown(t)}</div><div class="row"><button onclick="openDetail('${t.id}')">Open reis</button><button onclick="shareTrip('${t.id}')">WhatsApp</button><button onclick="deleteTrip('${t.id}')" class="danger">Verwijder</button></div>`;
-  list.appendChild(div);
- })
-}
-function openForm(trip=null){
- editId=trip?.id||null;
- $("formTitle").textContent=trip?"Reis bewerken":"Nieuwe reis";
- ["title","location","hotel","date","time","mood"].forEach(id=>$(id).value=trip?.[id]||($(id).type==="time"?"12:00":""));
- if(!trip){$("date").value=new Date(Date.now()+864e5*30).toISOString().slice(0,10);$("mood").value="relaxed"}
- $("formDialog").showModal();
-}
-$("addBtn").onclick=()=>openForm();
-$("cancelForm").onclick=()=>$("formDialog").close();
-$("travelForm").onsubmit=e=>{
- e.preventDefault();
- const data={id:editId||crypto.randomUUID(),title:title.value,location:location.value,hotel:hotel.value,date:date.value,time:time.value,mood:mood.value};
- trips=editId?trips.map(t=>t.id===editId?data:t):[...trips,data];
- saveTrips(); $("formDialog").close(); render();
-}
-function deleteTrip(id){if(confirm("Reis verwijderen?")){trips=trips.filter(t=>t.id!==id);saveTrips();render()}}
-function shareTrip(id){
- const t=trips.find(x=>x.id===id);
- const msg=`✈️ Travel Countdown\n\nNog ${countdown(t)} tot:\n${t.title}\n\n📍 ${t.location}\n🏨 ${t.hotel}\n\n${location.origin+location.pathname}`;
- location.href="https://wa.me/?text="+encodeURIComponent(msg);
-}
-
-async function geocode(place){
- const url=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(place)}&count=1&language=nl&format=json`;
- const r=await fetch(url); const j=await r.json();
- if(!j.results?.length) throw new Error("Locatie niet gevonden");
- return j.results[0];
-}
-async function weather(place){
- const g=await geocode(place);
- const url=`https://api.open-meteo.com/v1/forecast?latitude=${g.latitude}&longitude=${g.longitude}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=5`;
- const r=await fetch(url); const j=await r.json();
- return {geo:g, daily:j.daily};
-}
-function googleMapsLink(place,hotel){return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotel+" "+place)}`}
-function mapEmbed(place,hotel){return `https://maps.google.com/maps?q=${encodeURIComponent(hotel+" "+place)}&output=embed`}
-
-function fallbackAI(t){
- return `🌍 BESTEMMING
-${t.location} is jouw reisbestemming. Gebruik deze planner om praktische info, weer en kaart snel bij elkaar te houden.
-
-🏨 HOTEL
-${t.hotel}
-Check voor vertrek: inchecktijd, borg/toeristenbelasting, ontbijt, transfer en afstand tot centrum/strand.
-
-🧳 PAKLIJST
-Paspoort/ID, tickets, oplader, zonnebril, medicatie, pinpas/contant geld, reisverzekering.
-
-💡 TIPS
-• Sla het hotel op in Google Maps
-• Check 24 uur voor vertrek het weer
-• Maak een WhatsApp bericht met deze app
-• Zet de reis in je agenda
-
-🍽️ TER PLEKKE
-Zoek lokale gerechten, cafés in de buurt van het hotel en bezienswaardigheden op loopafstand.`;
-}
-async function realAI(t){
- const key=localStorage.getItem("openai-key");
- if(!key) return fallbackAI(t);
- const prompt=`Geef in het Nederlands compact reisadvies voor locatie ${t.location} en hotel ${t.hotel}. Inclusief highlights, eten, veiligheid, hoteltips, paklijst en 1 dagplanning. Geen verzonnen exacte reviewcijfers.`;
- const res=await fetch("https://api.openai.com/v1/responses",{
-  method:"POST",
-  headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
-  body:JSON.stringify({model:"gpt-4.1-mini",input:prompt})
- });
- if(!res.ok) throw new Error("AI fout: "+res.status);
- const data=await res.json();
- return data.output_text || fallbackAI(t);
-}
-window.openDetail=async id=>{
- activeTrip=trips.find(t=>t.id===id);
- $("detailContent").innerHTML=`<h2>✈️ ${activeTrip.title}</h2>
- <p>📍 ${activeTrip.location}</p><p>🏨 ${activeTrip.hotel}</p>
- <div class="count">${countdown(activeTrip)}</div>
- <div class="row"><button onclick="shareTrip('${id}')">📲 WhatsApp</button><button onclick="calendarTrip('${id}')">📅 Agenda</button><button onclick="openForm(activeTrip)">✎ Bewerk</button></div>
- <div class="hotel"><h3>🗺️ Kaart</h3><a href="${googleMapsLink(activeTrip.location,activeTrip.hotel)}" target="_blank"><button>Open in Google Maps</button></a><iframe class="map" src="${mapEmbed(activeTrip.location,activeTrip.hotel)}"></iframe></div>
- <div class="hotel"><h3>☀️ Weer</h3><div id="weatherBox">Weer laden...</div></div>
- <div class="hotel"><h3>🧠 AI reisinfo</h3><button onclick="loadAI()">AI info verversen</button><div id="aiBox" class="ai-box">AI info laden...</div></div>`;
- $("detailDialog").showModal();
- try{const w=await weather(activeTrip.location);$("weatherBox").innerHTML=w.daily.time.map((day,i)=>`<div class="weather-day"><strong>${day.slice(5)}</strong><br>🌡️ ${Math.round(w.daily.temperature_2m_min[i])}° / ${Math.round(w.daily.temperature_2m_max[i])}°<br>☔ ${w.daily.precipitation_probability_max[i]}%</div>`).join("");$("weatherBox").className="weather-grid"}catch(e){$("weatherBox").textContent="Weer kon niet geladen worden: "+e.message}
- loadAI();
-}
-window.loadAI=async()=>{try{$("aiBox").textContent=await realAI(activeTrip)}catch(e){$("aiBox").textContent=fallbackAI(activeTrip)+"\n\nAI melding: "+e.message}}
-function calendarTrip(id){
- const t=trips.find(x=>x.id===id), start=dt(t), end=new Date(start.getTime()+3600000);
- const f=d=>d.toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";
- const ics=`BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${t.title}\nDESCRIPTION:${t.location} - ${t.hotel}\nDTSTART:${f(start)}\nDTEND:${f(end)}\nEND:VEVENT\nEND:VCALENDAR`;
- const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));a.download=t.title.replace(/[^a-z0-9]/gi,"-")+".ics";a.click();
-}
-$("closeDetail").onclick=()=>$("detailDialog").close();
-$("settingsBtn").onclick=()=>{$("apiKey").value=localStorage.getItem("openai-key")||"";$("settingsDialog").showModal()}
-$("saveKey").onclick=()=>{localStorage.setItem("openai-key",$("apiKey").value.trim());alert("API key lokaal opgeslagen");}
-$("clearKey").onclick=()=>{localStorage.removeItem("openai-key");$("apiKey").value="";alert("API key verwijderd")}
-$("closeSettings").onclick=()=>$("settingsDialog").close();
-
-if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{})}
-render(); setInterval(render,60000);
+const list=$("countdownList"),dialog=$("countdownDialog"),form=$("countdownForm");
+let editingId=null,activeDetailId=null,deferredPrompt=null,shareItem=null,shareStyle="enthousiast";
+let countdowns=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null")||[
+{id:crypto.randomUUID(),title:"vakantie",category:"vakantie",target:"2026-05-13T16:00:00",location:"Sousse, Tunesië",hotel:"Royal Salem",mood:"relaxed",confettiShown:false},
+{id:crypto.randomUUID(),title:"verjaardag",category:"verjaardag",target:"2026-09-11T16:00:00",location:"",hotel:"",mood:"relaxed",confettiShown:false}
+];
+const emojiMap={vakantie:"✈️",liefde:"❤️",verjaardag:"🎂",feest:"🎉",deadline:"⏳",anders:"⭐"};
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(countdowns))}
+function pad(n){return String(Math.max(0,n)).padStart(2,"0")}
+function fmt(t){return new Intl.DateTimeFormat("nl-NL",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}).format(new Date(t)).replace(".","")}
+function calc(t){let d=Math.max(0,new Date(t)-Date.now()),days=Math.floor(d/864e5);d%=864e5;let h=Math.floor(d/36e5);d%=36e5;let m=Math.floor(d/6e4);d%=6e4;let s=Math.floor(d/1e3);return{days,h,m,s,done:new Date(t)<=Date.now(),ms:Math.max(0,new Date(t)-Date.now())}}
+function unit(l,v){let x=l==="DAGEN"?String(v).padStart(3,"0"):pad(v);return`<div class="unit"><div class="label">${l}</div><div class="digits">${x}</div></div>`}
+function render(){list.innerHTML="";[...countdowns].sort((a,b)=>new Date(a.target)-new Date(b.target)).forEach(item=>{let t=calc(item.target),em=emojiMap[item.category]||"⭐",card=document.createElement("article");card.className="card";card.dataset.id=item.id;card.innerHTML=`<section class="display"><div class="card-head"><div class="card-title">${em} ${item.title}</div><div class="card-icons">⏰↩⌃</div></div><div class="timer">${unit("DAGEN",t.days)}${unit("UUR",t.h)}${unit("MIN",t.m)}${unit("SEC",t.s)}</div></section><footer class="card-foot"><span>${fmt(item.target)}</span><div class="actions"><button class="action-btn" data-share="${item.id}">📲</button><button class="action-btn" data-cal="${item.id}">📅</button><button class="action-btn" data-edit="${item.id}">✎</button><button class="action-btn" data-del="${item.id}">🗑</button></div></footer>`;list.appendChild(card)})}
+function openForm(item=null){editingId=item?.id||null;$("dialogTitle").textContent=item?"Countdown bewerken":"Nieuwe countdown";$("titleInput").value=item?.title||"";$("categoryInput").value=item?.category||"vakantie";$("locationInput").value=item?.location||"";$("hotelInput").value=item?.hotel||"";$("moodInput").value=item?.mood||"relaxed";if(item){let d=new Date(item.target);$("dateInput").value=d.toISOString().slice(0,10);$("timeInput").value=d.toTimeString().slice(0,5)}else{let d=new Date(Date.now()+864e5);$("dateInput").value=d.toISOString().slice(0,10);$("timeInput").value="16:00"}dialog.showModal()}
+$("addBtn").onclick=()=>openForm();$("cancelBtn").onclick=()=>dialog.close();
+form.onsubmit=e=>{e.preventDefault();let data={id:editingId||crypto.randomUUID(),title:$("titleInput").value,category:$("categoryInput").value,target:`${$("dateInput").value}T${$("timeInput").value}:00`,location:$("locationInput").value,hotel:$("hotelInput").value,mood:$("moodInput").value,confettiShown:false};countdowns=editingId?countdowns.map(i=>i.id===editingId?{...i,...data}:i):[...countdowns,data];save();dialog.close();render()};
+function comma(v){return v.toFixed(1).replace(".",",")}function workdays(s,e){let c=0,d=new Date(s),end=new Date(e);d.setHours(0,0,0,0);end.setHours(0,0,0,0);while(d<end){let day=d.getDay();if(day&&day!==6)c++;d.setDate(d.getDate()+1)}return c}
+function statsHTML(item){let diff=calc(item.target).ms,days=diff/864e5;return `<section class="stats">${[["JAREN",comma(days/365.2425)],["MAANDEN",comma(days/30.436875)],["WEKEN",comma(days/7)],["DAGEN",comma(days)],["Werkdagen",comma(workdays(new Date(),new Date(item.target)))],["UREN",Math.floor(diff/36e5)],["MINUTEN",Math.floor(diff/6e4)],["SECONDEN",Math.floor(diff/1e3)],["MILLISECONDS",diff]].map((r,i)=>`<div class="stat-row ${i>5?"stat-strip":""}"><span class="stat-label">${r[0]}</span><span class="stat-value">${r[1]}</span></div>`).join("")}</section>`}
+function googleMapsLink(item){return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((item.hotel||"")+" "+(item.location||""))}`}
+function mapEmbed(item){return `https://maps.google.com/maps?q=${encodeURIComponent((item.hotel||"")+" "+(item.location||""))}&output=embed`}
+async function geocode(place){let r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(place)}&count=1&language=nl&format=json`);let j=await r.json();if(!j.results?.length)throw new Error("Locatie niet gevonden");return j.results[0]}
+async function loadWeather(item){if(!item.location)return "Geen locatie ingevuld.";let g=await geocode(item.location);let r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.latitude}&longitude=${g.longitude}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=5`);let j=await r.json();return j.daily.time.map((day,i)=>`<div class="weather-day"><strong>${day.slice(5)}</strong><br>🌡️ ${Math.round(j.daily.temperature_2m_min[i])}° / ${Math.round(j.daily.temperature_2m_max[i])}°<br>☔ ${j.daily.precipitation_probability_max[i]}%</div>`).join("")}
+function fallbackAI(item){return `🌍 BESTEMMING\n${item.location||"Geen locatie ingevuld"}\n\n🏨 HOTEL\n${item.hotel||"Geen hotel ingevuld"}\n\n💡 TIPS\n• Check inchecktijd, transfer en afstand tot centrum/strand\n• Sla hotel op in Google Maps\n• Check 24 uur voor vertrek het weer\n• Zet deze reis in je agenda\n\n🧳 PAKLIJST\nPaspoort/ID, tickets, oplader, pinpas, medicatie, reisverzekering en zonnebril.`}
+async function realAI(item){let key=localStorage.getItem("openai-key");if(!key)return fallbackAI(item);let prompt=`Geef compact Nederlands reisadvies voor bestemming ${item.location} en hotel ${item.hotel}. Vibe: ${item.mood}. Inclusief highlights, eten, hoteltips, paklijst en 1 dagplanning. Geen verzonnen reviewcijfers.`;let res=await fetch("https://api.openai.com/v1/responses",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:"gpt-4.1-mini",input:prompt})});if(!res.ok)throw new Error("AI fout "+res.status);let data=await res.json();return data.output_text||fallbackAI(item)}
+window.loadTravelInfo=async function(id){let item=countdowns.find(x=>x.id===id);try{$("weatherBox").innerHTML=await loadWeather(item);$("weatherBox").className="weather-grid"}catch(e){$("weatherBox").textContent="Weer kon niet geladen worden: "+e.message}try{$("aiBox").textContent=await realAI(item)}catch(e){$("aiBox").textContent=fallbackAI(item)+"\n\nAI melding: "+e.message}}
+function detail(id){activeDetailId=id;let item=countdowns.find(x=>x.id===id),t=calc(item.target),em=emojiMap[item.category]||"⭐";$("detailContent").innerHTML=`<article class="detail-count-card"><div class="card-head"><div class="card-title">${em} ${item.title}</div><div class="card-icons">⏰↩⌃</div></div><div class="timer">${unit("DAGEN",t.days)}${unit("UUR",t.h)}${unit("MIN",t.m)}${unit("SEC",t.s)}</div></article><div class="detail-date">${fmt(item.target)}</div><div class="detail-buttons"><button class="detail-btn" onclick="openShare('${item.id}')">📲 WhatsApp</button><button class="detail-btn" onclick="addCalendar('${item.id}')">📅 Agenda</button><button class="detail-btn" onclick="loadTravelInfo('${item.id}')">🧠 Reisinfo</button></div>${statsHTML(item)}<div class="travel-box"><h3>📍 Reisgegevens</h3><p>Locatie: ${item.location||"-"}</p><p>Hotel: ${item.hotel||"-"}</p><p>Vibe: ${item.mood||"-"}</p></div><div class="travel-box"><h3>🗺️ Kaart</h3><a href="${googleMapsLink(item)}" target="_blank"><button class="detail-btn">Open Google Maps</button></a>${item.location||item.hotel?`<iframe class="map" src="${mapEmbed(item)}"></iframe>`:""}</div><div class="travel-box"><h3>☀️ Weer</h3><div id="weatherBox">Tik op Reisinfo om weer te laden.</div></div><div class="travel-box"><h3>🧠 AI reisinfo</h3><div id="aiBox" class="ai-box">Tik op Reisinfo om AI info te laden.</div></div>`;$("detailDialog").showModal()}
+list.onclick=e=>{if(e.target.dataset.edit){openForm(countdowns.find(x=>x.id===e.target.dataset.edit));return}if(e.target.dataset.del){countdowns=countdowns.filter(x=>x.id!==e.target.dataset.del);save();render();return}if(e.target.dataset.share){openShare(e.target.dataset.share);return}if(e.target.dataset.cal){addCalendar(e.target.dataset.cal);return}let c=e.target.closest(".card");if(c)detail(c.dataset.id)}
+$("backDetailBtn").onclick=()=>$("detailDialog").close();$("detailEditBtn").onclick=()=>{let item=countdowns.find(x=>x.id===activeDetailId);$("detailDialog").close();openForm(item)};$("detailShareBtn").onclick=()=>openShare(activeDetailId);
+function shareMessage(item,style){let t=calc(item.target),em=emojiMap[item.category]||"⭐",url=location.origin+location.pathname;if(t.done)return`🎊 Het is zover!\n\nVandaag is het moment:\n${em} ${item.title}\n📍 ${item.location||""}\n🏨 ${item.hotel||""}\n\nEindelijk! 😄\n\n${url}`;let base=`Nog ${t.days} dagen, ${t.h} uur en ${t.m} minuten tot:\n\n${em} ${item.title}\n📍 ${item.location||"-"}\n🏨 ${item.hotel||"-"}\n\n📅 ${fmt(item.target)}`;let end={enthousiast:"Ik kan echt niet wachten 😄🔥",romantisch:"Ik kijk hier zó naar uit ❤️",grappig:"De spanning is niet meer te houden 😂",simpel:"Even delen zodat je het weet ✅"}[style];return`🎉 Countdown update!\n\n${base}\n\n${end}\n\nBekijk de countdown:\n${url}`}
+window.openShare=function(id){shareItem=countdowns.find(x=>x.id===id);shareStyle="enthousiast";$("shareText").value=shareMessage(shareItem,shareStyle);$("shareDialog").showModal()}
+document.querySelectorAll("[data-style]").forEach(b=>b.onclick=()=>{shareStyle=b.dataset.style;$("shareText").value=shareMessage(shareItem,shareStyle)});
+$("copyShareBtn").onclick=async()=>{await navigator.clipboard.writeText($("shareText").value);alert("Tekst gekopieerd")};$("openWhatsAppBtn").onclick=()=>{location.href=`https://wa.me/?text=${encodeURIComponent($("shareText").value)}`};$("closeShareBtn").onclick=()=>$("shareDialog").close();
+window.addCalendar=function(id){let item=countdowns.find(x=>x.id===id),start=new Date(item.target),end=new Date(start.getTime()+3600000),f=d=>d.toISOString().replace(/[-:]/g,"").split(".")[0]+"Z";let ics=`BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${item.title}\nDESCRIPTION:${item.location||""} ${item.hotel||""}\nDTSTART:${f(start)}\nDTEND:${f(end)}\nEND:VEVENT\nEND:VCALENDAR`;let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));a.download=`${item.title.replace(/[^a-z0-9]/gi,"-")}.ics`;a.click();URL.revokeObjectURL(a.href)}
+function setTheme(theme){document.body.className=theme==="neon"?"":`theme-${theme}`;localStorage.setItem(THEME_KEY,theme)}setTheme(localStorage.getItem(THEME_KEY)||"neon");$("themeBtn").onclick=()=>$("themeDialog").showModal();document.querySelectorAll("[data-theme]").forEach(b=>b.onclick=()=>{setTheme(b.dataset.theme);$("themeDialog").close()});$("closeThemeBtn").onclick=()=>$("themeDialog").close();
+function confetti(){let c=$("confettiCanvas"),ctx=c.getContext("2d");c.width=innerWidth;c.height=innerHeight;let p=Array.from({length:140},()=>({x:Math.random()*c.width,y:-20*Math.random(),r:3+Math.random()*6,v:2+Math.random()*5,a:Math.random()*6})),colors=["#ff1010","#ffd166","#06d6a0","#4cc9f0","#ff4fd8"],start=Date.now();(function frame(){ctx.clearRect(0,0,c.width,c.height);p.forEach((q,i)=>{q.y+=q.v;q.x+=Math.sin(q.a+=.08)*2;ctx.fillStyle=colors[i%colors.length];ctx.fillRect(q.x,q.y,q.r,q.r)});if(Date.now()-start<3500)requestAnimationFrame(frame);else ctx.clearRect(0,0,c.width,c.height)})();}
+function checkDone(){let changed=false;countdowns.forEach(i=>{if(new Date(i.target)<=Date.now()&&!i.confettiShown){i.confettiShown=true;changed=true;confetti();navigator.vibrate?.([120,70,120]);alert(`🎉 Het is zover: ${i.title}!`)}});if(changed)save()}
+$("settingsBtn").onclick=()=>{$("apiKeyInput").value=localStorage.getItem("openai-key")||"";$("settingsDialog").showModal()};$("saveKeyBtn").onclick=()=>{localStorage.setItem("openai-key",$("apiKeyInput").value.trim());alert("API key lokaal opgeslagen")};$("clearKeyBtn").onclick=()=>{localStorage.removeItem("openai-key");$("apiKeyInput").value="";alert("API key verwijderd")};$("closeSettingsBtn").onclick=()=>$("settingsDialog").close();
+$("menuBtn").onclick=()=>alert("Final Countdown Travel PRO");
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;$("installBtn").hidden=false;$("installStatus").textContent="Klaar om te installeren."});$("installBtn").onclick=async()=>{if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$("installBtn").hidden=true}};if("serviceWorker"in navigator){navigator.serviceWorker.register("./sw.js",{scope:"./"}).catch(()=>{})}
+render();setInterval(()=>{render();checkDone()},1000);

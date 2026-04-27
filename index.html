@@ -3,69 +3,77 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Travel Countdown v10</title>
+<title>Final Countdown Travel PRO</title>
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icons/icon-192.png">
 <link rel="stylesheet" href="./style.css">
-<meta name="theme-color" content="#111827">
+<meta name="theme-color" content="#202020">
 </head>
 <body>
+<canvas id="confettiCanvas"></canvas>
+
 <div class="app">
-<header>
-  <h1>✈️ Travel Countdown</h1>
-  <button id="settingsBtn">⚙️</button>
-</header>
+  <header class="topbar">
+    <button id="menuBtn" class="icon-btn">☰</button>
+    <h1>Final Countdown</h1>
+    <button id="addBtn" class="icon-btn plus">+</button>
+  </header>
 
-<section class="hero">
-  <strong>v10 Travel AI</strong>
-  <span>Countdown + bestemming + hotel + weer + kaart + AI reisadvies.</span>
-  <button id="addBtn">+ Nieuwe reis</button>
-</section>
+  <section class="intro-card">
+    <strong>Travel Countdown PRO</strong>
+    <span>v8 fun features + v10 reis, hotel, weer, kaart en AI.</span>
+    <div class="quick-actions">
+      <button id="themeBtn" class="pill">🎨 Thema</button>
+      <button id="settingsBtn" class="pill">⚙️ AI</button>
+      <button id="installBtn" class="pill install" hidden>App installeren</button>
+    </div>
+    <small id="installStatus">Chrome-menu ⋮ → App installeren / Toevoegen aan startscherm.</small>
+  </section>
 
-<main id="list"></main>
+  <main id="countdownList" class="list"></main>
 </div>
 
-<dialog id="formDialog">
-<form id="travelForm" class="panel">
-<h2 id="formTitle">Nieuwe reis</h2>
-<input id="title" placeholder="Naam reis, bijv. Zomervakantie" required>
-<input id="location" placeholder="Locatie, bijv. Sousse, Tunesië" required>
-<input id="hotel" placeholder="Hotel, bijv. Royal Salem" required>
-<input id="date" type="date" required>
-<input id="time" type="time" value="12:00" required>
-<select id="mood">
-<option value="relaxed">😎 Relaxed</option>
-<option value="romantisch">❤️ Romantisch</option>
-<option value="avontuur">🔥 Avontuur</option>
-<option value="familie">👨‍👩‍👧 Familie</option>
-</select>
-<div class="row">
-<button type="button" id="cancelForm">Sluiten</button>
-<button>Opslaan</button>
-</div>
+<dialog id="countdownDialog">
+<form method="dialog" id="countdownForm" class="dialog-card">
+<h2 id="dialogTitle">Nieuwe countdown</h2>
+<label>Naam <input id="titleInput" required maxlength="40" placeholder="vakantie"></label>
+<label>Datum <input id="dateInput" type="date" required></label>
+<label>Tijd <input id="timeInput" type="time" value="16:00" required></label>
+<label>Categorie <select id="categoryInput">
+<option value="vakantie">✈️ Vakantie</option><option value="liefde">❤️ Liefde</option><option value="verjaardag">🎂 Verjaardag</option><option value="feest">🎉 Feest</option><option value="deadline">⏳ Deadline</option><option value="anders">⭐ Anders</option>
+</select></label>
+<label>Locatie <input id="locationInput" placeholder="Bijv. Sousse, Tunesië"></label>
+<label>Hotel <input id="hotelInput" placeholder="Bijv. Royal Salem"></label>
+<label>Reis vibe <select id="moodInput"><option value="relaxed">😎 Relaxed</option><option value="romantisch">❤️ Romantisch</option><option value="avontuur">🔥 Avontuur</option><option value="familie">👨‍👩‍👧 Familie</option></select></label>
+<div class="dialog-actions"><button type="button" class="ghost" id="cancelBtn">Annuleren</button><button class="primary">Opslaan</button></div>
 </form>
 </dialog>
 
-<dialog id="detailDialog">
-<section class="panel detail">
-<button class="close" id="closeDetail">×</button>
-<div id="detailContent"></div>
+<dialog id="detailDialog" class="detail-dialog">
+<section class="detail-page">
+<header class="detail-topbar"><button class="icon-btn" id="backDetailBtn">‹</button><h1>Final Countdown</h1><button class="icon-btn" id="detailEditBtn">✎</button><button class="icon-btn" id="detailShareBtn">↗</button></header>
+<div class="detail-spacer"></div>
+<article id="detailContent"></article>
 </section>
 </dialog>
 
-<dialog id="settingsDialog">
-<section class="panel">
-<h2>AI instellingen</h2>
-<p class="muted">Voor echte AI kun je optioneel je eigen OpenAI API key lokaal op je telefoon opslaan. Zonder key gebruikt de app slimme vaste reisinfo.</p>
-<input id="apiKey" type="password" placeholder="OpenAI API key">
-<div class="row">
-<button id="saveKey">Opslaan</button>
-<button id="clearKey">Verwijder key</button>
-<button id="closeSettings">Sluiten</button>
-</div>
-</section>
-</dialog>
+<dialog id="shareDialog"><section class="dialog-card">
+<h2>WhatsApp delen</h2><p class="muted">Kies een stijl voor je bericht.</p>
+<div class="share-grid"><button data-style="enthousiast" class="share-style">😄 Enthousiast</button><button data-style="romantisch" class="share-style">❤️ Romantisch</button><button data-style="grappig" class="share-style">😂 Grappig</button><button data-style="simpel" class="share-style">✅ Simpel</button></div>
+<textarea id="shareText" rows="9"></textarea>
+<div class="dialog-actions stack"><button id="copyShareBtn" class="ghost" type="button">Kopieer tekst</button><button id="openWhatsAppBtn" class="primary" type="button">Open WhatsApp</button><button id="closeShareBtn" class="ghost" type="button">Sluiten</button></div>
+</section></dialog>
+
+<dialog id="themeDialog"><section class="dialog-card"><h2>Thema kiezen</h2>
+<div class="share-grid"><button data-theme="neon" class="share-style">🔴 Neon</button><button data-theme="minimal" class="share-style">⚫ Minimal dark</button><button data-theme="fun" class="share-style">🌈 Fun kleurrijk</button></div>
+<button id="closeThemeBtn" class="ghost full" type="button">Sluiten</button>
+</section></dialog>
+
+<dialog id="settingsDialog"><section class="dialog-card"><h2>AI instellingen</h2>
+<p class="muted">Echte AI werkt met je eigen OpenAI API key. Zonder key toont de app slimme standaard reisinfo.</p>
+<input id="apiKeyInput" type="password" placeholder="OpenAI API key">
+<div class="dialog-actions stack"><button id="saveKeyBtn" class="primary" type="button">Opslaan</button><button id="clearKeyBtn" class="ghost" type="button">Verwijder key</button><button id="closeSettingsBtn" class="ghost" type="button">Sluiten</button></div>
+</section></dialog>
 
 <script src="./app.js"></script>
-</body>
-</html>
+</body></html>

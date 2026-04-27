@@ -1,21 +1,8 @@
-# Travel Countdown v10 — AI + Weer + Kaart
+# Final Countdown Travel PRO — v10 Full
 
-Toegevoegd:
-- Reis countdown
-- Locatie + hotel
-- Weer via Open-Meteo
-- Kaart via Google Maps embed
-- Open in Google Maps
-- AI reisinfo
-- Optionele OpenAI API key lokaal opslaan
-- WhatsApp delen
-- Agenda export (.ics)
+Dit is de gecombineerde versie:
+- Alles uit v8: confetti, WhatsApp PRO, thema's, kalender, emoji-categorieën, detail stats, digitale countdown UI
+- Alles uit v10: locatie, hotel, weer, kaart, Google Maps, AI reisinfo met optionele OpenAI API key
 
-Upload alles in de root van je GitHub repo `Test`.
-De map `icons` moet als map blijven staan.
-
-Let op:
-- Weer werkt via internet.
-- Kaart werkt via internet.
-- Echte AI werkt alleen als je in instellingen een eigen OpenAI API key invult.
-- Zonder API key toont de app slimme standaard reisinfo.
+Upload alle bestanden in de root van je GitHub repo `Test`.
+Let op: de map `icons` moet een echte map blijven.
