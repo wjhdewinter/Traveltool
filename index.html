@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Reis Countdown</title>
+  <meta name="description" content="Reis countdown app met bestemmingen, hotelinfo, reisinfo, Google Maps, WhatsApp, kalender en PWA-installatie." />
+  <meta name="theme-color" content="#111827" />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">✈️</div>
+        <div>
+          <h1>Reis Countdown</h1>
+          <p class="subtitle">Bestemming, hotel, tips en aftellen in één mooie app.</p>
+        </div>
+      </div>
+
+      <div class="theme-switcher" aria-label="Thema kiezen">
+        <button class="theme-btn active" data-theme="dark" title="Dark">🌙</button>
+        <button class="theme-btn" data-theme="sunset" title="Sunset">🌅</button>
+        <button class="theme-btn" data-theme="tropical" title="Tropical">🌴</button>
+        <button class="theme-btn" data-theme="minimal" title="Light">⚪</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <article id="countdownCard" class="countdown-card glass">
+        <div>
+          <span class="trip-label" id="tripLabel">🌍 Volgende reis</span>
+          <h2 class="destination" id="destinationTitle">Sousse</h2>
+          <p class="hotel" id="hotelTitle">Hotel: Royal Salem</p>
+          <p class="country" id="countryTitle">Tunesië</p>
+        </div>
+
+        <div>
+          <div class="timer" aria-label="Countdown timer">
+            <div class="time-box"><strong id="days">0</strong><span>Dagen</span></div>
+            <div class="time-box"><strong id="hours">0</strong><span>Uren</span></div>
+            <div class="time-box"><strong id="minutes">0</strong><span>Minuten</span></div>
+            <div class="time-box"><strong id="seconds">0</strong><span>Seconden</span></div>
+          </div>
+          <div class="travel-mood" id="travelMood">Nog even geduld… de vakantie komt eraan.</div>
+        </div>
+      </article>
+
+      <aside class="side-panel">
+        <section class="info-card glass">
+          <h2>📍 Reisinfo</h2>
+          <p id="tripInfo"></p>
+
+          <div class="quick-actions">
+            <a id="mapsBtn" class="action-link primary" target="_blank" rel="noopener">🗺️ Maps</a>
+            <button id="shareBtn" class="success">💬 WhatsApp</button>
+            <button id="calendarBtn">📅 Agenda</button>
+            <button id="editBtn">✏️ Bewerken</button>
+          </div>
+        </section>
+
+        <section class="info-card glass">
+          <h3>🏨 Hotel info</h3>
+          <p id="hotelInfo"></p>
+        </section>
+
+        <section class="info-card glass">
+          <h3>✨ Vakantie tips</h3>
+          <p id="tipsText"></p>
+        </section>
+      </aside>
+    </section>
+
+    <section class="trips-strip" id="tripsStrip" aria-label="Reizen"></section>
+  </main>
+
+  <button class="install-btn" id="installBtn" hidden>📲 Installeer app</button>
+  <button class="fab" id="addBtn" aria-label="Nieuwe reis toevoegen">+</button>
+
+  <dialog id="tripDialog">
+    <form method="dialog" class="modal-inner" id="tripForm">
+      <h2 id="dialogTitle">Nieuwe reis</h2>
+
+      <div class="form-grid">
+        <label>
+          Land
+          <input id="inputCountry" required placeholder="Bijv. Tunesië" />
+        </label>
+
+        <label>
+          Plaats
+          <input id="inputDestination" required placeholder="Bijv. Sousse" />
+        </label>
+
+        <label>
+          Hotel
+          <input id="inputHotel" placeholder="Bijv. Royal Salem" />
+        </label>
+
+        <label>
+          Datum en tijd
+          <input id="inputDate" type="datetime-local" required />
+        </label>
+
+        <label>
+          Achtergrond foto URL
+          <input id="inputImage" placeholder="Optioneel: plak een afbeelding URL" />
+        </label>
+
+        <div class="auto-info-box">
+          <button type="button" id="generateInfoBtn" class="primary">✨ Vul info automatisch aan</button>
+          <small>Gebaseerd op land, plaats en hotel. Geen API nodig.</small>
+        </div>
+
+        <label>
+          Algemene reisinfo
+          <textarea id="inputInfo" placeholder="Wordt automatisch gevuld, maar je kunt het aanpassen."></textarea>
+        </label>
+
+        <label>
+          Hotel info
+          <textarea id="inputHotelInfo" placeholder="Wordt automatisch gevuld, maar je kunt het aanpassen."></textarea>
+        </label>
+
+        <label>
+          Tips
+          <textarea id="inputTips" placeholder="Wordt automatisch gevuld, maar je kunt het aanpassen."></textarea>
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="danger" id="deleteBtn">Verwijderen</button>
+        <button type="submit" class="primary">Opslaan</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
