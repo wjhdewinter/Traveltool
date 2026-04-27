@@ -1,146 +1,79 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Reis Countdown</title>
-  <meta name="description" content="Reis countdown app met bestemmingen, hotelinfo, reisinfo, Google Maps, WhatsApp, kalender en PWA-installatie." />
-  <meta name="theme-color" content="#111827" />
-
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="stylesheet" href="style.css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Final Countdown Travel PRO</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="stylesheet" href="./style.css">
+<meta name="theme-color" content="#202020">
 </head>
-
 <body>
-  <main class="app">
-    <header class="topbar">
-      <div class="brand">
-        <div class="logo">✈️</div>
-        <div>
-          <h1>Reis Countdown</h1>
-          <p class="subtitle">Bestemming, hotel, tips en aftellen in één mooie app.</p>
-        </div>
-      </div>
+<canvas id="confettiCanvas"></canvas>
 
-      <div class="theme-switcher" aria-label="Thema kiezen">
-        <button class="theme-btn active" data-theme="dark" title="Dark">🌙</button>
-        <button class="theme-btn" data-theme="sunset" title="Sunset">🌅</button>
-        <button class="theme-btn" data-theme="tropical" title="Tropical">🌴</button>
-        <button class="theme-btn" data-theme="minimal" title="Light">⚪</button>
-      </div>
-    </header>
+<div class="app">
+  <header class="topbar">
+    <button id="menuBtn" class="icon-btn">☰</button>
+    <h1>Final Countdown</h1>
+    <button id="addBtn" class="icon-btn plus">+</button>
+  </header>
 
-    <section class="hero">
-      <article id="countdownCard" class="countdown-card glass">
-        <div>
-          <span class="trip-label" id="tripLabel">🌍 Volgende reis</span>
-          <h2 class="destination" id="destinationTitle">Sousse</h2>
-          <p class="hotel" id="hotelTitle">Hotel: Royal Salem</p>
-          <p class="country" id="countryTitle">Tunesië</p>
-        </div>
+  <section class="intro-card">
+    <strong>Travel Countdown PRO</strong>
+    <span>v8 fun features + v10 reis, hotel, weer, kaart en AI.</span>
+    <div class="quick-actions">
+      <button id="themeBtn" class="pill">🎨 Thema</button>
+      <button id="settingsBtn" class="pill">⚙️ AI</button>
+      <button id="installBtn" class="pill install" hidden>App installeren</button>
+    </div>
+    <small id="installStatus">Chrome-menu ⋮ → App installeren / Toevoegen aan startscherm.</small>
+  </section>
 
-        <div>
-          <div class="timer" aria-label="Countdown timer">
-            <div class="time-box"><strong id="days">0</strong><span>Dagen</span></div>
-            <div class="time-box"><strong id="hours">0</strong><span>Uren</span></div>
-            <div class="time-box"><strong id="minutes">0</strong><span>Minuten</span></div>
-            <div class="time-box"><strong id="seconds">0</strong><span>Seconden</span></div>
-          </div>
-          <div class="travel-mood" id="travelMood">Nog even geduld… de vakantie komt eraan.</div>
-        </div>
-      </article>
+  <main id="countdownList" class="list"></main>
+</div>
 
-      <aside class="side-panel">
-        <section class="info-card glass">
-          <h2>📍 Reisinfo</h2>
-          <p id="tripInfo"></p>
+<dialog id="countdownDialog">
+<form method="dialog" id="countdownForm" class="dialog-card">
+<h2 id="dialogTitle">Nieuwe countdown</h2>
+<label>Naam <input id="titleInput" required maxlength="40" placeholder="vakantie"></label>
+<label>Datum <input id="dateInput" type="date" required></label>
+<label>Tijd <input id="timeInput" type="time" value="16:00" required></label>
+<label>Categorie <select id="categoryInput">
+<option value="vakantie">✈️ Vakantie</option><option value="liefde">❤️ Liefde</option><option value="verjaardag">🎂 Verjaardag</option><option value="feest">🎉 Feest</option><option value="deadline">⏳ Deadline</option><option value="anders">⭐ Anders</option>
+</select></label>
+<label>Locatie <input id="locationInput" placeholder="Bijv. Sousse, Tunesië"></label>
+<label>Hotel <input id="hotelInput" placeholder="Bijv. Royal Salem"></label>
+<label>Reis vibe <select id="moodInput"><option value="relaxed">😎 Relaxed</option><option value="romantisch">❤️ Romantisch</option><option value="avontuur">🔥 Avontuur</option><option value="familie">👨‍👩‍👧 Familie</option></select></label>
+<div class="dialog-actions"><button type="button" class="ghost" id="cancelBtn">Annuleren</button><button class="primary">Opslaan</button></div>
+</form>
+</dialog>
 
-          <div class="quick-actions">
-            <a id="mapsBtn" class="action-link primary" target="_blank" rel="noopener">🗺️ Maps</a>
-            <button id="shareBtn" class="success">💬 WhatsApp</button>
-            <button id="calendarBtn">📅 Agenda</button>
-            <button id="editBtn">✏️ Bewerken</button>
-          </div>
-        </section>
+<dialog id="detailDialog" class="detail-dialog">
+<section class="detail-page">
+<header class="detail-topbar"><button class="icon-btn" id="backDetailBtn">‹</button><h1>Final Countdown</h1><button class="icon-btn" id="detailEditBtn">✎</button><button class="icon-btn" id="detailShareBtn">↗</button></header>
+<div class="detail-spacer"></div>
+<article id="detailContent"></article>
+</section>
+</dialog>
 
-        <section class="info-card glass">
-          <h3>🏨 Hotel info</h3>
-          <p id="hotelInfo"></p>
-        </section>
+<dialog id="shareDialog"><section class="dialog-card">
+<h2>WhatsApp delen</h2><p class="muted">Kies een stijl voor je bericht.</p>
+<div class="share-grid"><button data-style="enthousiast" class="share-style">😄 Enthousiast</button><button data-style="romantisch" class="share-style">❤️ Romantisch</button><button data-style="grappig" class="share-style">😂 Grappig</button><button data-style="simpel" class="share-style">✅ Simpel</button></div>
+<textarea id="shareText" rows="9"></textarea>
+<div class="dialog-actions stack"><button id="copyShareBtn" class="ghost" type="button">Kopieer tekst</button><button id="openWhatsAppBtn" class="primary" type="button">Open WhatsApp</button><button id="closeShareBtn" class="ghost" type="button">Sluiten</button></div>
+</section></dialog>
 
-        <section class="info-card glass">
-          <h3>✨ Vakantie tips</h3>
-          <p id="tipsText"></p>
-        </section>
-      </aside>
-    </section>
+<dialog id="themeDialog"><section class="dialog-card"><h2>Thema kiezen</h2>
+<div class="share-grid"><button data-theme="neon" class="share-style">🔴 Neon</button><button data-theme="minimal" class="share-style">⚫ Minimal dark</button><button data-theme="fun" class="share-style">🌈 Fun kleurrijk</button></div>
+<button id="closeThemeBtn" class="ghost full" type="button">Sluiten</button>
+</section></dialog>
 
-    <section class="trips-strip" id="tripsStrip" aria-label="Reizen"></section>
-  </main>
+<dialog id="settingsDialog"><section class="dialog-card"><h2>AI instellingen</h2>
+<p class="muted">Echte AI werkt met je eigen OpenAI API key. Zonder key toont de app slimme standaard reisinfo.</p>
+<input id="apiKeyInput" type="password" placeholder="OpenAI API key">
+<div class="dialog-actions stack"><button id="saveKeyBtn" class="primary" type="button">Opslaan</button><button id="clearKeyBtn" class="ghost" type="button">Verwijder key</button><button id="closeSettingsBtn" class="ghost" type="button">Sluiten</button></div>
+</section></dialog>
 
-  <button class="install-btn" id="installBtn" hidden>📲 Installeer app</button>
-  <button class="fab" id="addBtn" aria-label="Nieuwe reis toevoegen">+</button>
-
-  <dialog id="tripDialog">
-    <form method="dialog" class="modal-inner" id="tripForm">
-      <h2 id="dialogTitle">Nieuwe reis</h2>
-
-      <div class="form-grid">
-        <label>
-          Land
-          <input id="inputCountry" required placeholder="Bijv. Tunesië" />
-        </label>
-
-        <label>
-          Plaats
-          <input id="inputDestination" required placeholder="Bijv. Sousse" />
-        </label>
-
-        <label>
-          Hotel
-          <input id="inputHotel" placeholder="Bijv. Royal Salem" />
-        </label>
-
-        <label>
-          Datum en tijd
-          <input id="inputDate" type="datetime-local" required />
-        </label>
-
-        <label>
-          Achtergrond foto URL
-          <input id="inputImage" placeholder="Optioneel: plak een afbeelding URL" />
-        </label>
-
-        <div class="auto-info-box">
-          <button type="button" id="generateInfoBtn" class="primary">✨ Vul info automatisch aan</button>
-          <small>Gebaseerd op land, plaats en hotel. Geen API nodig.</small>
-        </div>
-
-        <label>
-          Algemene reisinfo
-          <textarea id="inputInfo" placeholder="Wordt automatisch gevuld, maar je kunt het aanpassen."></textarea>
-        </label>
-
-        <label>
-          Hotel info
-          <textarea id="inputHotelInfo" placeholder="Wordt automatisch gevuld, maar je kunt het aanpassen."></textarea>
-        </label>
-
-        <label>
-          Tips
-          <textarea id="inputTips" placeholder="Wordt automatisch gevuld, maar je kunt het aanpassen."></textarea>
-        </label>
-      </div>
-
-      <div class="modal-actions">
-        <button type="button" class="danger" id="deleteBtn">Verwijderen</button>
-        <button type="submit" class="primary">Opslaan</button>
-      </div>
-    </form>
-  </dialog>
-
-  <script src="app.js"></script>
-</body>
-</html>
+<script src="./app.js"></script>
+</body></html>
