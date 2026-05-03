@@ -1,17 +1,13 @@
-# Final Countdown - verbeterde versie
+# Final Countdown PRO
 
-Deze versie houdt dezelfde lay-out, maar verbetert het delen.
+Verbeterde versie met dezelfde layout.
 
-## Belangrijkste verbetering
-De deel-link bevat nu de echte eindtijd (`targetMs`) en niet de zichtbare dagen/uren/minuten/seconden.
-Daardoor loopt de countdown bij iedereen live door wanneer ze de link openen.
+## Fixes
+- Delen gebruikt nu een korte link met einddatum/eindtijd.
+- Bij openen loopt de countdown direct live door.
+- Alle opties blijven zichtbaar in de app.
+- WhatsApp deelt een nette tekst met één klikbare live countdown-link.
+- Oude lange links blijven ook werken.
 
-## Uploaden naar GitHub
-Upload/overschrijf deze bestanden in je repo:
-- index.html
-- style.css
-- app.js
-- manifest.json
-
-Daarna je GitHub Pages link opnieuw openen.
-Bij oude cache: Chrome verversen of incognito openen.
+## Uploaden
+Upload alle bestanden naar je GitHub repo en vervang de bestaande bestanden.

@@ -1,4 +1,4 @@
-const VERSION = '2.1-share-fixed';
+const VERSION = '2.2-share-pro';
 const STORAGE_KEY = 'finalCountdown.items.v2';
 const $ = (id) => document.getElementById(id);
 let items = [];
@@ -105,16 +105,6 @@ function render(){
     </section>`;
   }).join('');
 }
-function shareData(item){
-  return {
-    v: 2,
-    title: item.title,
-    place: item.place,
-    hotel: item.hotel,
-    targetMs: getTargetMs(item),
-    targetLocal: item.targetLocal
-  };
-}
 function encodeShare(data){
   const json = JSON.stringify(data);
   return btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -124,27 +114,64 @@ function decodeShare(s){
   while(s.length % 4) s += '=';
   return JSON.parse(decodeURIComponent(escape(atob(s))));
 }
-function shareUrl(item){ return `${location.origin}${location.pathname}?c=${encodeShare(shareData(item))}`; }
+function compactDate(ms){ return Math.round(ms/1000).toString(36); }
+function expandDate(v){ return parseInt(v,36) * 1000; }
+function shareUrl(item){
+  const u = new URL(location.origin + location.pathname);
+  u.searchParams.set('d', compactDate(getTargetMs(item)));
+  if(item.title) u.searchParams.set('n', item.title);
+  if(item.place) u.searchParams.set('p', item.place);
+  if(item.hotel) u.searchParams.set('h', item.hotel);
+  return u.toString();
+}
 function readSharedFromUrl(){
-  const c = new URLSearchParams(location.search).get('c');
+  const q = new URLSearchParams(location.search);
+  // Nieuwe korte share-link: ?d=...
+  if(q.get('d')){
+    const targetMs = expandDate(q.get('d'));
+    return normalizeItem({
+      title: q.get('n') || 'Countdown',
+      place: q.get('p') || '',
+      hotel: q.get('h') || '',
+      targetMs,
+      targetLocal: toDatetimeLocal(targetMs)
+    });
+  }
+  // Oude lange share-link blijft ook werken: ?c=...
+  const c = q.get('c') || q.get('countdown');
   if(!c) return null;
-  try { return normalizeItem(decodeShare(c)); } catch(e) { return null; }
+  try {
+    if(q.get('countdown')) return normalizeItem(JSON.parse(atob(c)));
+    return normalizeItem(decodeShare(c));
+  } catch(e) { return null; }
+}
+function shareText(item){
+  const d = diffParts(getTargetMs(item));
+  return `✈️ ${item.title}\n📍 ${item.place || '-'}\n🏨 ${item.hotel || '-'}\n⏳ Nog ${d.days} dagen, ${pad(d.hours)} uur, ${pad(d.minutes)} min\n🗓️ Vertrek: ${new Date(getTargetMs(item)).toLocaleString('nl-NL')}\n\nOpen de live countdown:`;
 }
 async function shareItem(id){
   const item = items.find(x => x.id === id);
   if(!item) return;
   const url = shareUrl(item);
-  const text = `✈️ ${item.title}\n📍 ${item.place || '-'}\n🏨 ${item.hotel || '-'}\nVertrek: ${new Date(getTargetMs(item)).toLocaleString('nl-NL')}\n\nOpen live countdown:\n${url}`;
+  const text = shareText(item);
   try{
     if(navigator.share){
+      // URL apart meegeven. Daardoor komt er niet twee keer een ellenlange link in WhatsApp.
       await navigator.share({ title: `Countdown: ${item.title}`, text, url });
-    } else if(navigator.clipboard){
-      await navigator.clipboard.writeText(text);
-      toast('Deeltekst gekopieerd. Plak hem in WhatsApp.');
-    } else {
-      prompt('Kopieer deze link:', url);
+      return;
     }
   } catch(e) {}
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text + '\n' + url)}`;
+  window.open(whatsappUrl, '_blank');
+}
+async function copyShareLink(id){
+  const item = items.find(x => x.id === id);
+  if(!item) return;
+  const msg = shareText(item) + '\n' + shareUrl(item);
+  try{
+    await navigator.clipboard.writeText(msg);
+    toast('Deeltekst gekopieerd. Plak hem in WhatsApp.');
+  }catch(e){ prompt('Kopieer deze tekst:', msg); }
 }
 function openEditor(item={}){
   editId = item.id || null;
